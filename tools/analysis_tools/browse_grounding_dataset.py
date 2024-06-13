@@ -111,7 +111,7 @@ def main():
         if gt_bboxes is not None and isinstance(gt_bboxes, BaseBoxes):
             gt_instances.bboxes = gt_bboxes.tensor
 
-        print(data_sample.text)
+        print("datasample!",data_sample.text)
 
         dataset_mode = data_sample.dataset_mode
         if dataset_mode == 'VG':

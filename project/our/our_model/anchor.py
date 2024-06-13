@@ -23,6 +23,7 @@ from mmdet.models import MaskRCNN, StandardRoIHead, FCNMaskHead, SinePositionalE
 from transformers.models.sam.modeling_sam import SamVisionEncoderOutput
 
 from .common import MultiScaleConv, ColorAttentionAdapter
+import builtins
 
 
 @MODELS.register_module()
@@ -75,13 +76,13 @@ class USISAnchor(MaskRCNN):
         return positional_embedding.permute(2, 0, 1).unsqueeze(0)  # channel x height x width
 
     def extract_feat(self, batch_inputs: Tensor) -> Tuple[Tensor]:
-        if self.adapter:
+        if self.adapter: #√
             vision_outputs = self.backbone(batch_inputs, adapter=self.adapter)
         else:
             vision_outputs = self.backbone(batch_inputs)
         if isinstance(vision_outputs, SamVisionEncoderOutput):
-            image_embeddings = vision_outputs[0]
-            vision_hidden_states = vision_outputs[1]
+            image_embeddings = vision_outputs[0] #torch.Size([2, 256, 64, 64])
+            vision_hidden_states = vision_outputs[1] #tuple len 33 torch.Size([2, 64, 64, 1280])
         elif isinstance(vision_outputs, tuple):
             image_embeddings = vision_outputs[-1]
             vision_hidden_states = vision_outputs
@@ -93,7 +94,7 @@ class USISAnchor(MaskRCNN):
         batch_size = image_embeddings.shape[0]
         image_positional_embeddings = image_positional_embeddings.repeat(batch_size, 1, 1, 1)
 
-        x = self.neck(vision_hidden_states)
+        x = self.neck(vision_hidden_states) #做了特征聚合特征分解
         return x, image_embeddings, image_positional_embeddings
 
     def loss(self, batch_inputs: Tensor,
@@ -132,11 +133,11 @@ class USISAnchor(MaskRCNN):
                 batch_inputs: Tensor,
                 batch_data_samples: SampleList,
                 rescale: bool = True) -> SampleList:
-        x, image_embeddings, image_positional_embeddings = self.extract_feat(batch_inputs)
+        x, image_embeddings, image_positional_embeddings = self.extract_feat(batch_inputs) #x 五层特征金字塔 imageembedding&image_positional_embeddings torch.Size([2, 256, 64, 64]) 
 
         # If there are no pre-defined proposals, use RPN to get proposals
         if batch_data_samples[0].get('proposals', None) is None:
-            rpn_results_list = self.rpn_head.predict(
+            rpn_results_list = self.rpn_head.predict( #rpn_results_list[0]['scores'].shape(labels )  torch.Size([1000])?  bboxes torch.Size([1000, 4])
                 x, batch_data_samples, rescale=False)
         else:
             rpn_results_list = [
@@ -169,14 +170,14 @@ class USISFPN(BaseModule):
 
     def forward(self, inputs):
         if hasattr(self, 'feature_aggregator'):
-            x = self.feature_aggregator(inputs)
+            x = self.feature_aggregator(inputs) #torch.Size([2, 256, 64, 64])
         else:
             x = inputs
         if hasattr(self, 'feature_spliter'):
             x = self.feature_spliter(x)
         else:
             x = (x,)
-        return x
+        return x #五层特征金字塔 256→16
 
 
 @MODELS.register_module()
@@ -246,10 +247,10 @@ class USISSimpleFPNHead(BaseModule):
         """
         # build FPN
         inputs = []
-        inputs.append(self.fpn1(input))
-        inputs.append(self.fpn2(input))
-        inputs.append(self.fpn3(input))
-        inputs.append(self.fpn4(input))
+        inputs.append(self.fpn1(input)) #torch.Size([2, 64, 256, 256])
+        inputs.append(self.fpn2(input)) #torch.Size([2, 128, 128, 128])
+        inputs.append(self.fpn3(input)) #torch.Size([2, 256, 64, 64])
+        inputs.append(self.fpn4(input)) #torch.Size([2, 256, 32, 32])
 
         # build laterals
         laterals = [
@@ -265,7 +266,7 @@ class USISSimpleFPNHead(BaseModule):
         if self.num_outs > len(outs):
             for i in range(self.num_outs - self.num_ins):
                 outs.append(F.max_pool2d(outs[-1], 1, stride=2))
-        return tuple(outs)
+        return tuple(outs) #len 5 （b，c=256，h，w:256→128→64→32→16）
 
 
 @MODELS.register_module()
@@ -329,7 +330,7 @@ class USISFeatureAggregator(BaseModule):
                 hidden_state = x + hidden_state
             residual = hidden_conv(hidden_state)
             x = hidden_state + residual
-        x = self.fusion_conv(x)
+        x = self.fusion_conv(x) #torch.Size([2, 256, 64, 64])
         return x
 
 
@@ -463,7 +464,7 @@ class USISPrompterAnchorRoIPromptHead(StandardRoIHead):
         losses = dict()
         # bbox head loss
         if self.with_bbox:
-            bbox_results = self.bbox_loss(x, sampling_results)
+            bbox_results = self.bbox_loss(x, sampling_results) #运行完这行就print bbox_list
             losses.update(bbox_results['loss_bbox'])
 
         # mask head forward and loss

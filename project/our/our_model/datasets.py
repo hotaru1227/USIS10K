@@ -11,6 +11,23 @@ class ForegroundUSIS10KInsSegDataset(CocoDataset):
         'palette': [(0, 0, 255)]
     }
 
+@DATASETS.register_module()
+class ForegroundCPMInsSegDataset(CocoDataset):
+    """Dataset for Cityscapes."""
+
+    METAINFO = {
+        'classes': ['nuclei'],
+        'palette': [(0, 0, 255)]
+    }
+
+@DATASETS.register_module()
+class ForegroundMONUSEGInsSegDataset(CocoDataset):
+    """Dataset for Cityscapes."""
+
+    METAINFO = {
+        'classes': ['nuclei'],
+        'palette': [(0, 0, 255)]
+    }
 
 @DATASETS.register_module()
 class MultiClassUSIS10KInsSegDataset(CocoDataset):

@@ -10,6 +10,7 @@ default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', interval=3, max_keep_ckpts=1, save_best=['coco/bbox_mAP', 'coco/segm_mAP'],
                     rule='greater', save_last=True),
     sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='DetVisualizationHook')
 )
 
 env_cfg = dict(
@@ -54,8 +55,8 @@ num_classes = 7
 pointset_point_num = 5  # per pointset point
 
 # sam base model
-sam_pretrain_name = "/root/code/pretrain/sam-vit-huge"
-sam_pretrain_ckpt_path = "/root/code/pretrain/sam-vit-huge/pytorch_model.bin"
+sam_pretrain_name = "/data/hotaru/projects/USIS10K/pretrain/sam-vit-huge"
+sam_pretrain_ckpt_path = "/data/hotaru/projects/USIS10K/pretrain/sam-vit-huge/pytorch_model.bin"
 
 # model settings
 model = dict(

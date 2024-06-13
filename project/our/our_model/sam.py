@@ -50,7 +50,7 @@ class UAViTLayer(SamVisionLayer):
 
         if getattr(adapter, 'color_adapter', False):
             hidden_states = hidden_states * adapter.color_adapter(hidden_states)
-        hidden_states = residual + hidden_states
+        hidden_states = residual + hidden_states #torch.Size([2, 64, 64, 1280])
 
         layernorm_output = self.layer_norm2_no_grad(hidden_states)
 
@@ -137,7 +137,7 @@ class UAViTEncoder(nn.Module):
         all_hidden_states = () if output_hidden_states else None
         all_self_attentions = () if output_attentions else None
 
-        for i, layer_module in enumerate(self.layers):
+        for i, layer_module in enumerate(self.layers): #31
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
